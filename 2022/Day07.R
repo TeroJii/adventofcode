@@ -149,12 +149,13 @@ for(i in seq_along(files_and_stuff_df$nested)){
 
 end_lines <- NULL
 for(i in seq_along(nested_file_lines)){
-  # ninth, 33 pos causes problem
+  # 9, 33 and 34 lines cause problems for some reason
 
   if(!(i %in% c(9,33,34))){
     line_pos <- find_length_of_nested(start_line = files_and_stuff_df$start[nested_file_lines[i]],
                                       command_history = command_history)
   } else {
+    # leave problematic lines as-is for now
     line_pos <- files_and_stuff_df$end[nested_file_lines[i]]
   }
 
@@ -172,7 +173,7 @@ files_and_stuff_df$size <- map2(.x = files_and_stuff_df$start,
                                 ~find_size(.x, .y, command_history = command_history)
 ) %>% unlist()
 
-# let's see if this works (nested files not taken into account)
+# let's see if this works (nested files updated except for three problem directories)
 small_ones_df <- files_and_stuff_df %>%
   filter(size <= 100000)
 
