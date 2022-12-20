@@ -216,3 +216,168 @@ head_and_tail %>%
 
 # Simulate your complete series of motions on a larger rope with ten knots.
 # How many positions does the tail of the rope visit at least once?
+
+# We need to recursively track the following knots
+## However, the movement of the head differs slightly from the movement of subsequent rope parts,
+## which can also move diagonally
+##   start:   possible next pos:
+##              11111
+##    111       11111
+##    121       11211
+##    111       11111
+##              11111
+
+# The new positions in the corners need to be defined and movement of "2" in those cases defined as well
+
+## If the rope ahead moves diagonally, then the trailing part will also move diagonally to the same direction
+
+
+
+# A function for tracking the parts of the rope where the preceding part can move diagonally
+# give the x-y-movements of the first rope part as input
+# The function calculates trailing part movements
+track_rope <- function(df){
+  # data.frame with two consecutive rope parts
+  front_and_back <- data.frame("x_h" = df$x,
+                              "y_h" = df$y,
+                              # trailing positions to be determined
+                              "x_t" = NA,
+                              "y_t" = NA)
+
+  # starting pos of trailing rope part
+  front_and_back$x_t[1] <- front_and_back$y_t[1] <- 0
+
+  # Let's run through the tail positions
+  for(i in 2:length(front_and_back$x_h)){
+    # record tail position before the move
+    old_tail_pos <- c(front_and_back$x_t[i-1], front_and_back$y_t[i-1])
+    # record head position after the move
+    new_head_pos <- c(front_and_back$x_h[i], front_and_back$y_h[i])
+
+    #define relative position of head to old tail pos
+    rel_pos <- new_head_pos - old_tail_pos
+
+    # calculate distance between new head and old tail
+    distance <- rel_pos^2 %>% sum() %>% sqrt()
+
+    # if distance is less than two then the tail won't move
+    if(distance < 2){
+      new_tail_pos <- old_tail_pos
+    } else {
+      # define new position if needed
+      ## up 2
+      if(rel_pos[2] == 2){
+        #left
+        if(rel_pos[1] == -1|rel_pos[1] == -2){
+          new_tail_pos <- c(old_tail_pos[1] - 1, old_tail_pos[2] + 1)
+        }
+        #top
+        if(rel_pos[1] == 0){
+          new_tail_pos <- c(old_tail_pos[1], old_tail_pos[2] + 1)
+        }
+        #right
+        if(rel_pos[1] == 1|rel_pos[1] == 2){
+          new_tail_pos <- c(old_tail_pos[1] + 1, old_tail_pos[2] + 1)
+        }
+      }
+
+      ## up 1
+      if(rel_pos[2] == 1){
+        #left 2
+        if(rel_pos[1] == -2){
+          new_tail_pos <- c(old_tail_pos[1] - 1, old_tail_pos[2] + 1)
+        }
+        #right 2
+        if(rel_pos[1] == 2){
+          new_tail_pos <- c(old_tail_pos[1] + 1, old_tail_pos[2] + 1)
+        }
+      }
+
+      ## center line
+      if(rel_pos[2] == 0){
+        #left 2
+        if(rel_pos[1] == -2){
+          new_tail_pos <- c(old_tail_pos[1] - 1, old_tail_pos[2])
+        }
+        #right 2
+        if(rel_pos[1] == 2){
+          new_tail_pos <- c(old_tail_pos[1] + 1, old_tail_pos[2])
+        }
+      }
+
+      ## down 1
+      if(rel_pos[2] == -1){
+        #left 2
+        if(rel_pos[1] == -2){
+          new_tail_pos <- c(old_tail_pos[1] - 1, old_tail_pos[2] - 1)
+        }
+        #right 2
+        if(rel_pos[1] == 2){
+          new_tail_pos <- c(old_tail_pos[1] + 1, old_tail_pos[2] - 1)
+        }
+      }
+
+      ## down 2
+      if(rel_pos[2] == -2){
+        #left -1 or -2
+        if(rel_pos[1] == -1|rel_pos[1] == -2){
+          new_tail_pos <- c(old_tail_pos[1] - 1, old_tail_pos[2] - 1)
+        }
+        # down
+        if(rel_pos[1] == 0){
+          new_tail_pos <- c(old_tail_pos[1], old_tail_pos[2] - 1)
+        }
+        #right 1 or 2
+        if(rel_pos[1] == 1|rel_pos[1] == 2){
+          new_tail_pos <- c(old_tail_pos[1] + 1, old_tail_pos[2] - 1)
+        }
+      }
+    }
+
+
+    #record new tail positions for the round
+    front_and_back$x_t[i] <- new_tail_pos[1]
+    front_and_back$y_t[i] <- new_tail_pos[2]
+  }
+
+  return(front_and_back)
+} # end track_rope
+
+
+
+# we feed the tail as the new head for as many knots as needed
+recursive_tail <- function(path, knot, max_knots = 10){
+  if(knot == max_knots){
+    return(track_rope(df = path))
+  } else {
+    df <- track_rope(path)
+    df <- df %>% select(3:4)
+    # feed new tail as the next head
+   return(recursive_tail(path = df, knot = knot+1))
+  }
+} # end recursive tail
+
+#does't give the right answer for some reason
+ten_knots <- recursive_tail(path = select(head_and_tail, 3:4), knot = 2, max_knots = 10)
+
+ten_knots %>%
+  select(x_t, y_t) %>%
+  unique.data.frame() %>%
+  dim()
+
+#brute force
+second <- track_rope(df = head_and_tail[,3:4])
+third <- track_rope(df = second[,3:4])
+fourth <- track_rope(df = third[,3:4])
+fifth <- track_rope(df = fourth[,3:4])
+sixth <- track_rope(df = fifth[,3:4])
+seventh <- track_rope(df = sixth[,3:4])
+eigtht <- track_rope(df = seventh[,3:4])
+ninth <- track_rope(df = eigtht[,3:4])
+tail_df <- track_rope(df = ninth[,3:4])
+
+# doesn't work... something is funny
+tail_df %>%
+  select(x_t, y_t) %>%
+  unique.data.frame() %>%
+  dim()
