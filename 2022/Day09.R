@@ -357,27 +357,11 @@ recursive_tail <- function(path, knot, max_knots = 10){
   }
 } # end recursive tail
 
-#does't give the right answer for some reason
-ten_knots <- recursive_tail(path = select(head_and_tail, 3:4), knot = 2, max_knots = 10)
+# Calculated the knots incorrectly at first
+# works when you start from knot no. 3
+ten_knots <- recursive_tail(path = select(head_and_tail, 3:4), knot = 3, max_knots = 10)
 
 ten_knots %>%
-  select(x_t, y_t) %>%
-  unique.data.frame() %>%
-  dim()
-
-#brute force
-second <- track_rope(df = head_and_tail[,3:4])
-third <- track_rope(df = second[,3:4])
-fourth <- track_rope(df = third[,3:4])
-fifth <- track_rope(df = fourth[,3:4])
-sixth <- track_rope(df = fifth[,3:4])
-seventh <- track_rope(df = sixth[,3:4])
-eigtht <- track_rope(df = seventh[,3:4])
-ninth <- track_rope(df = eigtht[,3:4])
-tail_df <- track_rope(df = ninth[,3:4])
-
-# doesn't work... something is funny
-tail_df %>%
   select(x_t, y_t) %>%
   unique.data.frame() %>%
   dim()
